@@ -1,15 +1,17 @@
 package inc.foodie.controller;
 
+import inc.foodie.bean.Dish;
+import inc.foodie.bean.ImageModel;
 import inc.foodie.bean.Restaurant;
 import inc.foodie.dto.ResponseDto;
 import inc.foodie.service.RestaurantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.*;
 
 @RestController
 public class RestaurantController
@@ -43,6 +45,80 @@ public class RestaurantController
             response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
             response.setTimestamp(new Date());
             response.setData(null);
+        }
+
+        return response;
+    }
+
+    public Set<ImageModel> uploadImage(MultipartFile[] multipartFiles) throws IOException
+    {
+        Set<ImageModel> imageModels = new HashSet<>();
+
+        for(MultipartFile file: multipartFiles)
+        {
+            ImageModel imageModel = new ImageModel();
+
+            imageModel.setName(file.getName());
+            imageModel.setType(file.getContentType());
+            imageModel.setImageData(file.getBytes());
+
+            imageModels.add(imageModel);
+        }
+
+        return imageModels;
+    }
+
+    @PostMapping(value = {"/restaurant/addDish"}, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseDto addDish(@RequestPart("restaurantId") String restaurantId,
+                               @RequestPart("dish") Dish myDish,
+                               @RequestPart("imageFile") MultipartFile[] file)
+    {
+        ResponseDto response = new ResponseDto();
+        try
+        {
+            if(myDish.getDishCategory() == null
+                    || myDish.getDishName() == null
+                    || myDish.getCost() < 1)
+            {
+                response.setMessage("The dish was not successfully saved because one of the fields are blank.");
+                response.setStatus(HttpStatus.BAD_REQUEST.value());
+                response.setTimestamp(new Date());
+                response.setData(null);
+
+                return response;
+            }
+            else
+            {
+                Set<ImageModel> dishImages =  uploadImage(file);
+                myDish.setDishImages(dishImages);
+
+                //Now get the restaurant that needs the menu updated
+                Optional<Restaurant> myOptionalRestaurant = service.getRestaurantByRestaurantId(Integer.parseInt(restaurantId));
+                if(myOptionalRestaurant.isEmpty())
+                {
+                    response.setMessage("Error! The dish could not be saved!");
+                    response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
+                    response.setTimestamp(new Date());
+                    response.setData(null);
+                }
+                else
+                {
+                    Restaurant selectedRestaurant = myOptionalRestaurant.get();
+                    //Append the dishes to the restaurant.
+                    selectedRestaurant.setDishes(myDish);
+
+                    service.updateRestaurant(myOptionalRestaurant.get());
+
+                    response.setMessage("The dish was successfully saved.");
+                    response.setStatus(HttpStatus.OK.value());
+                    response.setTimestamp(new Date());
+                    response.setData(myOptionalRestaurant.get().getDishes());
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            System.out.println("An error has occurred! :" + e.getMessage());
         }
 
         return response;

@@ -43,8 +43,8 @@ public class Restaurant
         return dishes;
     }
 
-    public void setDishes(List<Dish> dishes)
+    public void setDishes(Dish myDish)
     {
-        this.dishes = dishes;
+        this.dishes.add(myDish);
     }
 }

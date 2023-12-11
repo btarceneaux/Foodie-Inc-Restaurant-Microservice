@@ -1,9 +1,9 @@
 package inc.foodie.bean;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class Dish
@@ -14,6 +14,8 @@ public class Dish
     private String dishName;
     private String dishCategory;
     private double cost;
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<ImageModel> dishImages = new HashSet<>();
 
     public Dish()
     {
@@ -57,5 +59,18 @@ public class Dish
     public void setCost(double cost)
     {
         this.cost = cost;
+    }
+
+    public Set<ImageModel> getDishImages()
+    {
+        return dishImages;
+    }
+
+    public void setDishImages(Set<ImageModel> dishImages)
+    {
+        for(ImageModel image : dishImages)
+        {
+            this.dishImages.add(image);
+        }
     }
 }
