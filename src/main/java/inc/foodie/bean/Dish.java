@@ -14,8 +14,7 @@ public class Dish
     private String dishName;
     private String dishCategory;
     private double cost;
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<ImageModel> dishImages = new HashSet<>();
+    private String imageURL;
 
     public Dish()
     {
@@ -61,16 +60,13 @@ public class Dish
         this.cost = cost;
     }
 
-    public Set<ImageModel> getDishImages()
+    public String getImageURL()
     {
-        return dishImages;
+        return imageURL;
     }
 
-    public void setDishImages(Set<ImageModel> dishImages)
+    public void setImageURL(String imageURL)
     {
-        for(ImageModel image : dishImages)
-        {
-            this.dishImages.add(image);
-        }
+        this.imageURL = imageURL;
     }
 }

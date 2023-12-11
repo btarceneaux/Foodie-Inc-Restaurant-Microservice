@@ -1,10 +1,11 @@
 package inc.foodie.controller;
 
 import inc.foodie.bean.Dish;
-import inc.foodie.bean.ImageModel;
 import inc.foodie.bean.Restaurant;
+import inc.foodie.bean.S3Documents;
 import inc.foodie.dto.ResponseDto;
 import inc.foodie.service.RestaurantService;
+import inc.foodie.service.S3DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +19,9 @@ public class RestaurantController
 {
     @Autowired
     RestaurantService service;
+
+    @Autowired
+    private S3DocumentService documentService;
 
     @GetMapping("/restaurant")
     public List<Restaurant> getAllRestaurants()
@@ -50,28 +54,10 @@ public class RestaurantController
         return response;
     }
 
-    public Set<ImageModel> uploadImage(MultipartFile[] multipartFiles) throws IOException
-    {
-        Set<ImageModel> imageModels = new HashSet<>();
-
-        for(MultipartFile file: multipartFiles)
-        {
-            ImageModel imageModel = new ImageModel();
-
-            imageModel.setName(file.getName());
-            imageModel.setType(file.getContentType());
-            imageModel.setImageData(file.getBytes());
-
-            imageModels.add(imageModel);
-        }
-
-        return imageModels;
-    }
-
     @PostMapping(value = {"/restaurant/addDish"}, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseDto addDish(@RequestPart("restaurantId") String restaurantId,
                                @RequestPart("dish") Dish myDish,
-                               @RequestPart("imageFile") MultipartFile[] file)
+                               @RequestPart("imageFile") MultipartFile file)
     {
         ResponseDto response = new ResponseDto();
         try
@@ -89,8 +75,10 @@ public class RestaurantController
             }
             else
             {
-                Set<ImageModel> dishImages =  uploadImage(file);
-                myDish.setDishImages(dishImages);
+
+                // Saving metadata to db
+                String fileURL = documentService.upload(file);
+                myDish.setImageURL(fileURL);
 
                 //Now get the restaurant that needs the menu updated
                 Optional<Restaurant> myOptionalRestaurant = service.getRestaurantByRestaurantId(Integer.parseInt(restaurantId));
