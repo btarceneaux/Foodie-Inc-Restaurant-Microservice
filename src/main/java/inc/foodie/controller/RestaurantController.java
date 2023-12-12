@@ -1,17 +1,21 @@
 package inc.foodie.controller;
 
+import com.amazonaws.HttpMethod;
+import com.mashape.unirest.http.Unirest;
 import inc.foodie.bean.Dish;
 import inc.foodie.bean.Restaurant;
-import inc.foodie.bean.S3Documents;
 import inc.foodie.dto.ResponseDto;
 import inc.foodie.service.RestaurantService;
-import inc.foodie.service.S3DocumentService;
+import inc.foodie.service.S3StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
+
+import java.io.File;
 import java.util.*;
 
 @RestController
@@ -21,7 +25,10 @@ public class RestaurantController
     RestaurantService service;
 
     @Autowired
-    private S3DocumentService documentService;
+    private S3StorageService s3StorageService;
+
+    @Value("${AWS-BUCKETNAME}")
+    private String bucketName;
 
     @GetMapping("/restaurant")
     public List<Restaurant> getAllRestaurants()
@@ -60,6 +67,7 @@ public class RestaurantController
                                @RequestPart("file") MultipartFile file)
     {
         ResponseDto response = new ResponseDto();
+
         try
         {
             if(myDish.getDishCategory() == null
@@ -75,10 +83,8 @@ public class RestaurantController
             }
             else
             {
-
-                // Saving metadata to db
-                String fileURL = documentService.upload(file);
-                myDish.setImageURL(fileURL);
+                //Upload the image to Amazon S3 bucket
+                String awsResult = s3StorageService.uploadFile(file);
 
                 //Now get the restaurant that needs the menu updated
                 Optional<Restaurant> myOptionalRestaurant = service.getRestaurantByRestaurantId(Integer.parseInt(restaurantId));
