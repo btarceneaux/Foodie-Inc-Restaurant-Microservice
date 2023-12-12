@@ -1,5 +1,7 @@
 package inc.foodie.service.implementation;
 
+import com.amazonaws.services.kinesisanalytics.model.Input;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import inc.foodie.bean.S3Documents;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 @Service
@@ -26,10 +29,50 @@ public class S3DocumentServiceImplementation implements S3DocumentService
     @Value("${aws.s3.bucket.name}")
     private String bucketName;
 
+    @Value("${AWS-REGION}")
+    private String region;
+
+//    @Override
+//    public String upload(MultipartFile file) throws IOException
+//    {
+//        if (file.isEmpty())
+//            throw new IllegalStateException("Cannot upload empty file");
+//
+//        Map<String, String> metadata = new HashMap<>();
+//        metadata.put("Content-Type", file.getContentType());
+//        metadata.put("Content-Length", String.valueOf(file.getSize()));
+//
+//        String path = String.format("%s/%s", bucketName, UUID.randomUUID());
+//        String fileName = String.format("%s", file.getOriginalFilename());
+//
+//        try
+//        {
+//            InputStream inputStream = file.getInputStream();
+//
+//            //Set the content length
+//            ObjectMetadata objectMetadata = new ObjectMetadata();
+//            objectMetadata.setContentLength(file.getSize());
+//
+//            // Uploading file to s3
+//            PutObjectResult putObjectResult = amazonS3Service.upload(
+//                    path, fileName, Optional.of(metadata), inputStream);
+//
+//            // Saving metadata to db
+//            documentRepository.save(new S3Documents(fileName, path, putObjectResult.getMetadata().getVersionId()));
+//        }
+//        catch (Exception e)
+//        {
+//            System.out.println("An exception has occurred : " + e);
+//        }
+//
+//        // Constructing S3 URL
+//        String s3Url = String.format("https://s3.%s.amazonaws.com/%s/%s", region, path, fileName);
+//
+//        return s3Url;
+//    }
 
     @Override
-    public String upload(MultipartFile file) throws IOException
-    {
+    public String upload(MultipartFile file) throws IOException {
         if (file.isEmpty())
             throw new IllegalStateException("Cannot upload empty file");
 
@@ -40,15 +83,26 @@ public class S3DocumentServiceImplementation implements S3DocumentService
         String path = String.format("%s/%s", bucketName, UUID.randomUUID());
         String fileName = String.format("%s", file.getOriginalFilename());
 
-        // Uploading file to s3
-        PutObjectResult putObjectResult = amazonS3Service.upload(
-                path, fileName, Optional.of(metadata), file.getInputStream());
+        try
+        {
+            InputStream inputStream = file.getInputStream();
+            ObjectMetadata objectMetadata = new ObjectMetadata();
+            objectMetadata.setContentLength(file.getSize());
+
+            // Uploading file to s3
+            PutObjectResult putObjectResult = amazonS3Service.upload(
+                    path, fileName, Optional.of(metadata), inputStream);
+
+            // Saving metadata to db
+            documentRepository.save(new S3Documents(fileName, path, putObjectResult.getMetadata().getVersionId()));
+        }
+        catch (Exception e)
+        {
+            System.out.println(e);
+        }
 
         // Constructing S3 URL
-        String s3Url = String.format("https://%s.s3.amazonaws.com/%s/%s", bucketName, path, fileName);
-
-        // Saving metadata to db
-        documentRepository.save(new S3Documents(fileName, path, putObjectResult.getMetadata().getVersionId()));
+        String s3Url = String.format("https://s3.%s.amazonaws.com/%s/%s", region, path, fileName);
 
         return s3Url;
     }

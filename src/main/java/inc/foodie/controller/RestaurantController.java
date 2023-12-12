@@ -57,7 +57,7 @@ public class RestaurantController
     @PostMapping(value = {"/restaurant/addDish"}, consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseDto addDish(@RequestPart("restaurantId") String restaurantId,
                                @RequestPart("dish") Dish myDish,
-                               @RequestPart("imageFile") MultipartFile file)
+                               @RequestPart("file") MultipartFile file)
     {
         ResponseDto response = new ResponseDto();
         try
