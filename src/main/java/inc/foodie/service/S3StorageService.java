@@ -39,10 +39,10 @@ public class S3StorageService
     public String uploadFile(MultipartFile file) throws IOException
     {
         File fileObject = convertMultiPartFileToFile(file);
-        s3Client.putObject(new PutObjectRequest(bucketName, file.getOriginalFilename(), fileObject));
+        s3Client.putObject(new PutObjectRequest(bucketName, file.getOriginalFilename().replace(' ', '_'), fileObject));
         fileObject.delete();
 
-        return "File uploaded : " + file.getOriginalFilename();
+        return file.getOriginalFilename().replace(' ', '_');
     }
 
     public byte[] downloadFile(String fileName)

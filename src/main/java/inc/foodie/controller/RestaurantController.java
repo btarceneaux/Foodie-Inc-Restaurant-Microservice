@@ -1,7 +1,5 @@
 package inc.foodie.controller;
 
-import com.amazonaws.HttpMethod;
-import com.mashape.unirest.http.Unirest;
 import inc.foodie.bean.Dish;
 import inc.foodie.bean.Restaurant;
 import inc.foodie.dto.ResponseDto;
@@ -11,11 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
 import java.util.*;
 
 @RestController
@@ -84,10 +79,12 @@ public class RestaurantController
             else
             {
                 //Upload the image to Amazon S3 bucket
-                String awsResult = s3StorageService.uploadFile(file);
+                String myFileURL = "https://s3.us-west-2.amazonaws.com/foodie.inc.fileupload/" + s3StorageService.uploadFile(file);
+                myDish.setImageURL(myFileURL);
 
                 //Now get the restaurant that needs the menu updated
                 Optional<Restaurant> myOptionalRestaurant = service.getRestaurantByRestaurantId(Integer.parseInt(restaurantId));
+
                 if(myOptionalRestaurant.isEmpty())
                 {
                     response.setMessage("Error! The dish could not be saved!");
@@ -153,17 +150,46 @@ public class RestaurantController
         return response;
     }
 
-    @PutMapping("/restaurant")
-    public ResponseDto updateRestaurant(@RequestBody Restaurant myRestaurant)
+    @DeleteMapping("/restaurant/deleteDish/{restaurantId}/{dishId}")
+    public ResponseDto updateRestaurantDishes(@PathVariable int restaurantId, @PathVariable int dishId)
     {
         ResponseDto response = new ResponseDto();
 
-        Restaurant updatedRestaurant  = service.updateRestaurant(myRestaurant);
+        //First we need to get the restaurant that needs to be changed.
 
-        response.setMessage("The restaurant was updated successfully.");
-        response.setStatus(HttpStatus.OK.value());
-        response.setTimestamp(new Date());
-        response.setData(updatedRestaurant);
+        Optional<Restaurant> optionalRestaurant = service.getRestaurantByRestaurantId(restaurantId);
+        if(optionalRestaurant.isPresent())
+        {
+            Restaurant myRestaurant = optionalRestaurant.get();
+
+            String dishImageFileName = myRestaurant.getDishes().get(dishId).getImageURL();
+
+            //Remove the path part of the dishImageFileName
+            String fileName = dishImageFileName.replaceAll("https://s3.us-west-2.amazonaws.com/foodie.inc.fileupload/", "");
+
+            //First, let's remove the image from the S3 bucket
+            s3StorageService.deleteFile(fileName);
+
+            //Next we need to remove the item from the array list
+            myRestaurant.getDishes().remove(dishId);
+
+            //Finally, we can sync everything to the database
+            Restaurant updatedRestaurant  = service.updateRestaurant(myRestaurant);
+
+            response.setMessage("The dish was successfully removed.");
+            response.setStatus(HttpStatus.OK.value());
+            response.setTimestamp(new Date());
+            response.setData(updatedRestaurant);
+
+
+        }
+        else
+        {
+            response.setMessage("The dish was not removed.");
+            response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
+            response.setTimestamp(new Date());
+            response.setData(null);
+        }
 
         return response;
     }
