@@ -1,6 +1,5 @@
 package inc.foodie.bean;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +11,8 @@ public class Restaurant
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int restaurantId;
     private String restaurantName;
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Dish> dishes = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Dish> dishes = new ArrayList<>();
 
     public Restaurant()
     {

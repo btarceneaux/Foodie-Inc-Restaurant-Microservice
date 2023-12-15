@@ -116,11 +116,11 @@ public class RestaurantController
     }
 
     @PostMapping("/restaurant")
-    public ResponseDto createRestaurant(@RequestBody Restaurant myRestaurant)
+    public ResponseDto createRestaurant(@RequestBody String restaurantName)
     {
         ResponseDto response = new ResponseDto();
 
-        if(myRestaurant.getRestaurantName() == null)
+        if(restaurantName == null)
         {
             response.setMessage("The restaurant was not successfully saved because one of the fields are blank.");
             response.setStatus(HttpStatus.BAD_REQUEST.value());
@@ -129,8 +129,10 @@ public class RestaurantController
 
             return response;
         }
+        Restaurant tempRestaurant = new Restaurant();
+        tempRestaurant.setRestaurantName(restaurantName);
 
-        Restaurant savedRestaurant = service.createRestaurant(myRestaurant);
+        Restaurant savedRestaurant = service.createRestaurant(tempRestaurant);
 
         if(savedRestaurant.getRestaurantId() > 0)
         {
@@ -150,8 +152,47 @@ public class RestaurantController
         return response;
     }
 
+    @PutMapping("/restaurant/updateDish/{restaurantId}")
+    public ResponseDto updateRestaurantDish(@PathVariable int restaurantId, @RequestBody Dish myDish)
+    {
+        ResponseDto response = new ResponseDto();
+
+        //First we need to get the restaurant that needs to be changed.
+
+        Optional<Restaurant> optionalRestaurant = service.getRestaurantByRestaurantId(restaurantId);
+
+        //Find the dish that needs to be updated and update it.
+        if(optionalRestaurant.isPresent())
+        {
+            Restaurant myRestaurant = optionalRestaurant.get();
+            int dishIndex = 0;
+            for(Dish tempDish : myRestaurant.getDishes())
+            {
+                if(tempDish.getDishId() == myDish.getDishId())
+                {
+                    myRestaurant.getDishes().get(dishIndex).setDishName(myDish.getDishName());
+                    myRestaurant.getDishes().get(dishIndex).setDishCategory(myDish.getDishCategory());
+                    myRestaurant.getDishes().get(dishIndex).setCost(myDish.getCost());
+
+                    break;
+                }
+                dishIndex++;
+            }
+
+            //Finally, we can sync everything to the database
+            Restaurant updatedRestaurant  = service.updateRestaurant(myRestaurant);
+
+            response.setMessage("The dish was successfully updated.");
+            response.setStatus(HttpStatus.OK.value());
+            response.setTimestamp(new Date());
+            response.setData(updatedRestaurant);
+        }
+
+        return response;
+    }
+
     @DeleteMapping("/restaurant/deleteDish/{restaurantId}/{dishId}")
-    public ResponseDto updateRestaurantDishes(@PathVariable int restaurantId, @PathVariable int dishId)
+    public ResponseDto updateRestaurantDishQuantities(@PathVariable int restaurantId, @PathVariable int dishId)
     {
         ResponseDto response = new ResponseDto();
 
