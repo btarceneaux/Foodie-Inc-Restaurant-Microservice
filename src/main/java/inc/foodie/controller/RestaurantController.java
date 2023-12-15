@@ -152,13 +152,45 @@ public class RestaurantController
         return response;
     }
 
+    @PutMapping("/restaurant/updateRestaurant/{restaurantId}")
+    public ResponseDto updateRestaurantInfo(@PathVariable int restaurantId, @RequestBody String newRestaurantName)
+    {
+        ResponseDto response = new ResponseDto();
+
+        //First we need to get the restaurant that needs to be changed.
+        Optional<Restaurant> optionalRestaurant = service.getRestaurantByRestaurantId(restaurantId);
+
+        if(optionalRestaurant.isPresent())
+        {
+            Restaurant myRestaurant = optionalRestaurant.get();
+
+            myRestaurant.setRestaurantName(newRestaurantName);
+
+            //Finally, we can sync everything to the database
+            Restaurant updatedRestaurant  = service.updateRestaurant(myRestaurant);
+
+            response.setMessage("The restaurant was successfully updated.");
+            response.setStatus(HttpStatus.OK.value());
+            response.setTimestamp(new Date());
+            response.setData(updatedRestaurant);
+        }
+        else
+        {
+            response.setMessage("Error! The restaurant was not successfully updated.");
+            response.setStatus(HttpStatus.EXPECTATION_FAILED.value());
+            response.setTimestamp(new Date());
+            response.setData(null);
+        }
+
+        return response;
+    }
+
     @PutMapping("/restaurant/updateDish/{restaurantId}")
     public ResponseDto updateRestaurantDish(@PathVariable int restaurantId, @RequestBody Dish myDish)
     {
         ResponseDto response = new ResponseDto();
 
         //First we need to get the restaurant that needs to be changed.
-
         Optional<Restaurant> optionalRestaurant = service.getRestaurantByRestaurantId(restaurantId);
 
         //Find the dish that needs to be updated and update it.
