@@ -12,10 +12,10 @@ pipeline {
     {
         DBUN="${DBUN}"
         DBPW="${DBPW}"
-        AWS-ACCESSKEY="${AWS-ACCESSKEY}"
-        AWS-SECRETKEY="${AWS-SECRETKEY}"
-        AWS-BUCKETNAME="${AWS-BUCKETNAME}"
-        AWS-REGION="${AWS-REGION}"
+        AWS_ACCESSKEY="${AWS_ACCESSKEY}"
+        AWS_SECRETKEY="${AWS_SECRETKEY}"
+        AWS_BUCKETNAME="${AWS_BUCKETNAME}"
+        AWS_REGION="${AWS_REGION}"
     }
 
     stages {
@@ -56,10 +56,10 @@ pipeline {
             docker container run \
             --env DBUN=$DBUN \
             --env DBPW=$DBPW \
-            --env AWS-ACCESSKEY=$AWS-ACCESSKEY \
-            --env AWS-SECRETKEY=$AWS-SECRETKEY \
-            --env AWS-BUCKETNAME=$AWS-BUCKETNAME \
-            --env AWS-REGION=$AWS-REGION \
+            --env AWS_ACCESSKEY=$AWS_ACCESSKEY \
+            --env AWS_SECRETKEY=$AWS_SECRETKEY \
+            --env AWS_BUCKETNAME=$AWS_BUCKETNAME \
+            --env AWS_REGION=$AWS_REGION \
             --restart always \
             --name restaurant-service \
             -p 8082:8082 \
