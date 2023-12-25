@@ -10,12 +10,12 @@ pipeline {
 
     environment
     {
-        DBUN='root'
-        DBPW='Myd@t@b@$3'
-        AWS-ACCESSKEY='AKIA2ZKWOLT2K7PWWXGM'
-        AWS-SECRETKEY='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'
-        AWS-BUCKETNAME='foodie.inc.fileupload'
-        AWS-REGION='us-west-2'
+        DBUN="${DBUN}"
+        DBPW="${DBPW}"
+        AWS-ACCESSKEY="${AWS-ACCESSKEY}"
+        AWS-SECRETKEY="${AWS-SECRETKEY}"
+        AWS-BUCKETNAME="${AWS-BUCKETNAME}"
+        AWS-REGION="${AWS-REGION}"
     }
 
     stages {
