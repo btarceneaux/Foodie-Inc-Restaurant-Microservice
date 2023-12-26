@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 
 @RestController
+@CrossOrigin(origins = "http://ec2-35-87-48-128.us-west-2.compute.amazonaws.com:4000")
 public class RestaurantController
 {
     @Autowired
